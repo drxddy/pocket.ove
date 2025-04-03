@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pocket/domain/utils/utils.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class PocketApp extends StatefulWidget {
   const PocketApp({super.key});
@@ -16,10 +18,8 @@ class _PocketAppState extends State<PocketApp> {
       body: Stack(
         children: [
           // Main content
-          _isExpanded 
-              ? Container() 
-              : HomeScreen(),
-          
+          _isExpanded ? Container() : HomeScreen(),
+
           // Bottom draggable panel
           Positioned(
             left: 0,
@@ -46,19 +46,19 @@ class _PocketAppState extends State<PocketApp> {
                         )
                       : BorderRadius.zero,
                 ),
-                child: _isExpanded 
-                  ? RecordingScreen(
-                      onClose: () {
-                        setState(() {
-                          _isExpanded = false;
-                        });
-                      },
-                    )
-                  : BottomBar(),
+                child: _isExpanded
+                    ? RecordingScreen(
+                        onClose: () {
+                          setState(() {
+                            _isExpanded = false;
+                          });
+                        },
+                      )
+                    : BottomBar(),
               ),
             ),
           ),
-          
+
           // Top swipe down indicator (when expanded)
           if (_isExpanded)
             Positioned(
@@ -73,7 +73,32 @@ class _PocketAppState extends State<PocketApp> {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final DateTime calendarStart = DateTime(2025, 1, 1);
+  final DateTime calendarEnd = DateTime(2025, 12, 31);
+  DateTime selectedDay = DateTime.now();
+
+  DateTime focusedDay = DateTime.now();
+  void onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      this.selectedDay = selectedDay;
+      this.focusedDay = focusedDay;
+    });
+  }
+
+  void onPageChanged(DateTime focusedDay) {
+    setState(() {
+      this.focusedDay = focusedDay;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -124,7 +149,7 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Category chips
           Container(
             height: 100,
@@ -149,10 +174,9 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          
+
           SizedBox(height: 20),
-          
-          // Your conversations section
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
@@ -163,55 +187,62 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           SizedBox(height: 16),
-          
+
           // Date selector
-          Container(
-            height: 60,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              children: List.generate(7, (index) {
-                final days = ['M', 'T', 'W', 'T', 'FRI', 'S', 'S'];
-                final dates = [5, 6, 7, 8, 9, 10, 11];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 20.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        dates[index].toString(),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: index == 4 ? FontWeight.bold : FontWeight.normal,
-                          color: index == 4 ? Colors.amber : Colors.grey,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        days[index],
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: index == 4 ? Colors.amber : Colors.grey,
-                        ),
-                      ),
-                      if (index == 4)
-                        Container(
-                          margin: EdgeInsets.only(top: 4),
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.amber,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
-                  ),
-                );
-              }),
-            ),
+          TableCalendar(
+            firstDay: calendarStart,
+            focusedDay: focusedDay,
+            headerVisible: false,
+            lastDay: calendarEnd,
+            calendarFormat: CalendarFormat.week,
+            availableCalendarFormats: const {
+              CalendarFormat.week: 'Week',
+            },
+            calendarBuilders: const CalendarBuilders(),
+            eventLoader: (day) => [if (day.isToday) 1],
+            pageJumpingEnabled: true,
+            pageAnimationEnabled: true,
+            selectedDayPredicate: (day) {
+              return isSameDay(selectedDay, day);
+            },
+            onDaySelected: onDaySelected,
+            onPageChanged: onPageChanged,
+            pageAnimationDuration: const Duration(milliseconds: 300),
+            pageAnimationCurve: Curves.ease,
+            daysOfWeekStyle: const DaysOfWeekStyle(
+                decoration: BoxDecoration(),
+                weekdayStyle: TextStyle(fontSize: 13, color: Colors.white54),
+                weekendStyle: TextStyle(fontSize: 13, color: Colors.white54)),
+            headerStyle: const HeaderStyle(
+                formatButtonShowsNext: true,
+                formatButtonVisible: true,
+                formatButtonDecoration: BoxDecoration(
+                    color: AppColors.onSurface,
+                    borderRadius: BorderRadius.all(Radius.circular(12))),
+                formatButtonPadding: EdgeInsets.all(5),
+                leftChevronMargin: EdgeInsets.zero,
+                rightChevronMargin: EdgeInsets.zero,
+                headerPadding: EdgeInsets.only(left: 20, bottom: 10),
+                leftChevronVisible: false,
+                rightChevronVisible: false),
+            calendarStyle: CalendarStyle(
+                markersMaxCount: 1,
+                weekendTextStyle: const TextStyle(color: Colors.grey),
+                markerDecoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(12)),
+                selectedDecoration: BoxDecoration(
+                    shape: BoxShape.rectangle,
+                    border: Border.all(color: AppColors.background, width: 2)),
+                todayDecoration: BoxDecoration(
+                    shape: BoxShape.rectangle,
+                    color: AppColors.background.withOpacity(.2))),
+            formatAnimationDuration: const Duration(milliseconds: 300),
+            formatAnimationCurve: Curves.ease,
           ),
-          
+
           // Conversation list
           Expanded(
             child: ListView(
@@ -227,7 +258,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                     ConversationItem(
                       title: '1:1 w/ Akshay',
-                      subtitle: 'Conversation with\nAkshay about product features',
+                      subtitle:
+                          'Conversation with\nAkshay about product features',
                       gradientColors: [Colors.red[400]!, Colors.orange[300]!],
                       hasActionButton: true,
                     ),
@@ -239,7 +271,6 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                
                 DateSection(
                   date: 'Monday, Jan 5 \'25',
                   conversations: [
@@ -249,7 +280,10 @@ class HomeScreen extends StatelessWidget {
                           child: ConversationItem(
                             title: 'Daily standup',
                             subtitle: 'Discussion on open\ntasks for the week',
-                            gradientColors: [Colors.pink[100]!, Colors.purple[100]!],
+                            gradientColors: [
+                              Colors.pink[100]!,
+                              Colors.purple[100]!
+                            ],
                             isSmall: true,
                             hasActionButton: true,
                           ),
@@ -259,7 +293,10 @@ class HomeScreen extends StatelessWidget {
                           child: ConversationItem(
                             title: 'Design brainstorm',
                             subtitle: 'Chat about visual\ndesign ideas',
-                            gradientColors: [Colors.green[200]!, Colors.teal[100]!],
+                            gradientColors: [
+                              Colors.green[200]!,
+                              Colors.teal[100]!
+                            ],
                             isSmall: true,
                             hasActionButton: true,
                           ),
@@ -268,13 +305,13 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                
                 DateSection(
                   date: 'Friday, Jan 2 \'25',
                   conversations: [
                     ConversationItem(
                       title: 'All hands meet',
-                      subtitle: 'Discussion on overall org wide\nupdates on performance',
+                      subtitle:
+                          'Discussion on overall org wide\nupdates on performance',
                       gradientColors: [Colors.purple[400]!, Colors.pink[300]!],
                       hasActionButton: true,
                     ),
@@ -370,10 +407,12 @@ class DateSection extends StatelessWidget {
           ],
         ),
         SizedBox(height: 16),
-        ...conversations.map((conversation) => Padding(
-          padding: EdgeInsets.only(bottom: 16),
-          child: conversation,
-        )).toList(),
+        ...conversations
+            .map((conversation) => Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: conversation,
+                ))
+            .toList(),
       ],
     );
   }
@@ -426,8 +465,7 @@ class ConversationItem extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (hasActionButton)
-                    Icon(Icons.keyboard_arrow_right),
+                  if (hasActionButton) Icon(Icons.keyboard_arrow_right),
                 ],
               ),
               SizedBox(height: 4),
@@ -546,7 +584,7 @@ class RecordingScreen extends StatelessWidget {
       children: [
         // Swipe down hint
         SwipeDownIndicator(),
-        
+
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -574,7 +612,7 @@ class RecordingScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 // Waveform
                 Row(
                   children: [
@@ -612,7 +650,7 @@ class RecordingScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 // Controls
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -636,7 +674,7 @@ class RecordingScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 // Connection status
                 Text(
                   "Connected · 75%",
@@ -662,18 +700,20 @@ class WaveformPainter extends CustomPainter {
       ..color = Colors.white
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
-    
+
     // Generate random heights for the waveform
-    final random = List.generate(40, (index) => 
-      (index % 3 == 0) ? size.height * 0.8 : size.height * 0.2 + (index % 5) * size.height * 0.1
-    );
-    
+    final random = List.generate(
+        40,
+        (index) => (index % 3 == 0)
+            ? size.height * 0.8
+            : size.height * 0.2 + (index % 5) * size.height * 0.1);
+
     final barWidth = size.width / (random.length * 2);
-    
+
     for (int i = 0; i < random.length; i++) {
       final x = i * barWidth * 2 + barWidth / 2;
       final height = random[i];
-      
+
       // Draw the line from center to up and down
       canvas.drawLine(
         Offset(x, size.height / 2 - height / 2),
@@ -698,7 +738,7 @@ class ChatSaveScreen extends StatelessWidget {
           children: [
             // Swipe down hint
             SwipeDownIndicator(),
-            
+
             Expanded(
               child: Center(
                 child: Column(
@@ -724,9 +764,9 @@ class ChatSaveScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    
+
                     SizedBox(height: 20),
-                    
+
                     // Chat title
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -748,12 +788,13 @@ class ChatSaveScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    
+
                     SizedBox(height: 12),
-                    
+
                     // Tag indicator
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.grey[800],
                         borderRadius: BorderRadius.circular(16),
@@ -776,7 +817,8 @@ class ChatSaveScreen extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Icon(Icons.arrow_drop_down, color: Colors.white, size: 16),
+                          Icon(Icons.arrow_drop_down,
+                              color: Colors.white, size: 16),
                         ],
                       ),
                     ),
@@ -784,17 +826,19 @@ class ChatSaveScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Bottom buttons and keyboard
             Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0, vertical: 12.0),
                   child: Row(
                     children: [
                       Expanded(
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
                           decoration: BoxDecoration(
                             color: Colors.grey[800],
                             borderRadius: BorderRadius.circular(24),
@@ -814,7 +858,8 @@ class ChatSaveScreen extends StatelessWidget {
                       SizedBox(width: 12),
                       Expanded(
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(24),
@@ -834,7 +879,7 @@ class ChatSaveScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Keyboard suggestion bar
                 Container(
                   height: 40,
@@ -842,7 +887,8 @@ class ChatSaveScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         margin: EdgeInsets.only(left: 8),
                         decoration: BoxDecoration(
                           color: Colors.grey[800],
@@ -868,7 +914,8 @@ class ChatSaveScreen extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         margin: EdgeInsets.only(right: 8),
                         child: Text(
                           "to",
@@ -881,15 +928,17 @@ class ChatSaveScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Keyboard (simulated)
                 Container(
                   height: 220,
                   color: Colors.grey[850],
                   child: Column(
                     children: [
-                      buildKeyboardRow(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']),
-                      buildKeyboardRow(['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l']),
+                      buildKeyboardRow(
+                          ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']),
+                      buildKeyboardRow(
+                          ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l']),
                       Row(
                         children: [
                           Container(
@@ -900,28 +949,29 @@ class ChatSaveScreen extends StatelessWidget {
                               color: Colors.grey[700],
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Icon(Icons.arrow_upward, color: Colors.white, size: 20),
+                            child: Icon(Icons.arrow_upward,
+                                color: Colors.white, size: 20),
                           ),
-                          ...['z', 'x', 'c', 'v', 'b', 'n', 'm'].map((key) => 
-                            Container(
-                              width: 34,
-                              height: 40,
-                              margin: EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[700],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  key,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            )
-                          ).toList(),
+                          ...['z', 'x', 'c', 'v', 'b', 'n', 'm']
+                              .map((key) => Container(
+                                    width: 34,
+                                    height: 40,
+                                    margin: EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[700],
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        key,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
                           Container(
                             width: 40,
                             height: 40,
@@ -930,7 +980,8 @@ class ChatSaveScreen extends StatelessWidget {
                               color: Colors.grey[700],
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Icon(Icons.backspace, color: Colors.white, size: 20),
+                            child: Icon(Icons.backspace,
+                                color: Colors.white, size: 20),
                           ),
                         ],
                       ),
@@ -1004,7 +1055,8 @@ class ChatSaveScreen extends StatelessWidget {
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Icon(Icons.emoji_emotions_outlined, color: Colors.white, size: 24),
+                            child: Icon(Icons.emoji_emotions_outlined,
+                                color: Colors.white, size: 24),
                           ),
                           Container(
                             width: 40,
@@ -1014,7 +1066,8 @@ class ChatSaveScreen extends StatelessWidget {
                               color: Colors.transparent,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Icon(Icons.mic, color: Colors.white, size: 24),
+                            child:
+                                Icon(Icons.mic, color: Colors.white, size: 24),
                           ),
                         ],
                       ),
@@ -1028,30 +1081,30 @@ class ChatSaveScreen extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget buildKeyboardRow(List<String> keys) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: keys.map((key) => 
-        Container(
-          width: 34,
-          height: 40,
-          margin: EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: Colors.grey[700],
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Center(
-            child: Text(
-              key,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        )
-      ).toList(),
+      children: keys
+          .map((key) => Container(
+                width: 34,
+                height: 40,
+                margin: EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.grey[700],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Center(
+                  child: Text(
+                    key,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ))
+          .toList(),
     );
   }
 }
