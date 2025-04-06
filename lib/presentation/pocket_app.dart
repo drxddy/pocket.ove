@@ -65,7 +65,13 @@ class _PocketAppState extends State<PocketApp> {
               top: 0,
               left: 0,
               right: 0,
-              child: SwipeDownIndicator(),
+              child: SwipeDownIndicator(
+                () {
+                  setState(() {
+                    _isExpanded = false;
+                  });
+                },
+              ),
             ),
         ],
       ),
@@ -188,59 +194,107 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          SizedBox(height: 16),
-
-          // Date selector
-          TableCalendar(
-            firstDay: calendarStart,
-            focusedDay: focusedDay,
-            headerVisible: false,
-            lastDay: calendarEnd,
-            calendarFormat: CalendarFormat.week,
-            availableCalendarFormats: const {
-              CalendarFormat.week: 'Week',
-            },
-            calendarBuilders: const CalendarBuilders(),
-            eventLoader: (day) => [if (day.isToday) 1],
-            pageJumpingEnabled: true,
-            pageAnimationEnabled: true,
-            selectedDayPredicate: (day) {
-              return isSameDay(selectedDay, day);
-            },
-            onDaySelected: onDaySelected,
-            onPageChanged: onPageChanged,
-            pageAnimationDuration: const Duration(milliseconds: 300),
-            pageAnimationCurve: Curves.ease,
-            daysOfWeekStyle: const DaysOfWeekStyle(
-                decoration: BoxDecoration(),
-                weekdayStyle: TextStyle(fontSize: 13, color: Colors.white54),
-                weekendStyle: TextStyle(fontSize: 13, color: Colors.white54)),
-            headerStyle: const HeaderStyle(
-                formatButtonShowsNext: true,
-                formatButtonVisible: true,
-                formatButtonDecoration: BoxDecoration(
-                    color: AppColors.onSurface,
-                    borderRadius: BorderRadius.all(Radius.circular(12))),
-                formatButtonPadding: EdgeInsets.all(5),
-                leftChevronMargin: EdgeInsets.zero,
-                rightChevronMargin: EdgeInsets.zero,
-                headerPadding: EdgeInsets.only(left: 20, bottom: 10),
-                leftChevronVisible: false,
-                rightChevronVisible: false),
-            calendarStyle: CalendarStyle(
-                markersMaxCount: 1,
-                weekendTextStyle: const TextStyle(color: Colors.grey),
-                markerDecoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(12)),
-                selectedDecoration: BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    border: Border.all(color: AppColors.background, width: 2)),
-                todayDecoration: BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    color: AppColors.background.withOpacity(.2))),
-            formatAnimationDuration: const Duration(milliseconds: 300),
-            formatAnimationCurve: Curves.ease,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TableCalendar(
+              firstDay: calendarStart,
+              focusedDay: focusedDay,
+              headerVisible: false,
+              lastDay: calendarEnd,
+              calendarFormat: CalendarFormat.week,
+              availableCalendarFormats: const {
+                CalendarFormat.week: 'Week',
+              },
+              calendarBuilders: CalendarBuilders(
+                defaultBuilder: (context, day, focusedDay) => Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.transparent,
+                  ),
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                holidayBuilder: (context, day, focusedDay) => Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.transparent,
+                  ),
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                selectedBuilder: (context, day, focusedDay) => Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blue[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              pageJumpingEnabled: true,
+              pageAnimationEnabled: true,
+              selectedDayPredicate: (day) {
+                return isSameDay(selectedDay, day);
+              },
+              onDaySelected: onDaySelected,
+              onPageChanged: onPageChanged,
+              pageAnimationDuration: const Duration(milliseconds: 300),
+              pageAnimationCurve: Curves.ease,
+              daysOfWeekStyle: const DaysOfWeekStyle(
+                  decoration: BoxDecoration(),
+                  weekdayStyle: TextStyle(fontSize: 13, color: Colors.white54),
+                  weekendStyle: TextStyle(fontSize: 13, color: Colors.white54)),
+              headerStyle: const HeaderStyle(
+                  formatButtonShowsNext: true,
+                  formatButtonVisible: true,
+                  formatButtonDecoration: BoxDecoration(
+                      color: AppColors.onSurface,
+                      borderRadius: BorderRadius.all(Radius.circular(12))),
+                  formatButtonPadding: EdgeInsets.all(5),
+                  leftChevronMargin: EdgeInsets.zero,
+                  rightChevronMargin: EdgeInsets.zero,
+                  headerPadding: EdgeInsets.only(left: 20, bottom: 10),
+                  leftChevronVisible: false,
+                  rightChevronVisible: false),
+              calendarStyle: CalendarStyle(
+                  markersMaxCount: 1,
+                  weekendTextStyle: const TextStyle(color: Colors.grey),
+                  markerDecoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12)),
+                  selectedDecoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      border: Border.all(color: AppColors.background, width: 2)),
+                  todayDecoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      color: AppColors.background.withOpacity(.2))),
+              formatAnimationDuration: const Duration(milliseconds: 300),
+              formatAnimationCurve: Curves.ease,
+            ),
           ),
 
           // Conversation list
@@ -545,25 +599,36 @@ class BottomBar extends StatelessWidget {
 }
 
 class SwipeDownIndicator extends StatelessWidget {
+  final void Function() onSwipeDown;
+
+  const SwipeDownIndicator(this.onSwipeDown, {super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.only(top: 40, bottom: 20),
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.keyboard_arrow_down, size: 20),
-            SizedBox(width: 8),
-            Text(
-              "Swipe down to go home",
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+    return GestureDetector(
+      onPanUpdate: (DragUpdateDetails details) {
+        if (details.delta.dy > 0) {
+          onSwipeDown();
+        }
+      },
+      child: Container(
+        color: Colors.white,
+        padding: EdgeInsets.only(top: 40, bottom: 20),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.keyboard_arrow_down, size: 20),
+              SizedBox(width: 8),
+              Text(
+                "Swipe down to go home",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -583,7 +648,7 @@ class RecordingScreen extends StatelessWidget {
     return Column(
       children: [
         // Swipe down hint
-        SwipeDownIndicator(),
+        SwipeDownIndicator(onClose),
 
         Expanded(
           child: Padding(
@@ -729,6 +794,13 @@ class WaveformPainter extends CustomPainter {
 
 // Chat with Tasha screen (second image)
 class ChatSaveScreen extends StatelessWidget {
+  final VoidCallback onClose;
+
+  const ChatSaveScreen({
+    super.key,
+    required this.onClose,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -737,7 +809,7 @@ class ChatSaveScreen extends StatelessWidget {
         child: Column(
           children: [
             // Swipe down hint
-            SwipeDownIndicator(),
+            SwipeDownIndicator(onClose),
 
             Expanded(
               child: Center(

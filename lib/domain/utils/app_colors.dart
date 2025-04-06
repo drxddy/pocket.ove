@@ -8,6 +8,7 @@ class AppColors {
   static const Color background = Color(0xFFF5F5F5);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color error = Color(0xFFB00020);
+  static const Color accentOrange = Color(0xFFFF9500);
   static const Color onPrimary = Color(0xFFFFFFFF);
   static const Color onSecondary = Color(0xFF000000);
   static const Color onBackground = Color(0xFF000000);
